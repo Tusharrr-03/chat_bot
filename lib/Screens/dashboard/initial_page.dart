@@ -1,6 +1,12 @@
+import 'package:chat_bot/Screens/dashboard/bloc/chat_bloc.dart';
+import 'package:chat_bot/Screens/dashboard/bloc/chat_event.dart';
+import 'package:chat_bot/Screens/dashboard/bloc/chat_state.dart';
 import 'package:chat_bot/data/model/message_model.dart';
+import 'package:chat_bot/data/remote/app_urls.dart';
+import 'package:chat_bot/data/remote/helper/api_helper.dart';
 import 'package:chat_bot/utils/utils_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 class InitialPage extends StatefulWidget {
@@ -31,6 +37,8 @@ class _InitialPageState extends State<InitialPage> {
         sentAt: DateTime.now().millisecondsSinceEpoch.toString(),
       ),
     );
+    //context.read<ChatBloc>().add(GetAllResponse());
+    ApiHelper().postApi(url: AppUrls.baseURl,msg: query.text);
   }
 
   DateFormat hrsFormat = DateFormat.Hms();
@@ -44,7 +52,6 @@ class _InitialPageState extends State<InitialPage> {
           padding: const EdgeInsets.all(11.0),
           child: Column(
             children: [
-
               /// Heading Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -85,9 +92,8 @@ class _InitialPageState extends State<InitialPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   InkWell(
-                    onTap: (){
+                    onTap: () {
                       /// Clear the old chats
-
                     },
                     child: Container(
                       child: Row(
@@ -129,13 +135,29 @@ class _InitialPageState extends State<InitialPage> {
                 ],
               ),
               Expanded(
-                child: ListView.builder(
-                  itemCount: msgModel.length,
-                  reverse: true,
-                  itemBuilder: (_, index) {
-                    return msgModel[index].id == 0
-                        ? userChat(msgModel[index])
-                        : botChat(msgModel[index]);
+                child: BlocBuilder<ChatBloc, ChatState>(
+                  builder: (_, state) {
+                    if (state is LoadingChatState) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    if (state is FailureChatState) {
+                      return Center(child: Text(state.errMsg));
+                    }
+
+                    if (state is SuccessChatState) {
+                      return ListView.builder(
+                        itemCount: msgModel.length,
+                        reverse: true,
+                        itemBuilder: (_, index) {
+                          return msgModel[index].id == 0
+                              ? userChat(msgModel[index])
+                              : botChat(msgModel[index]);
+                        },
+                      );
+                    }
+
+                    return Container();
                   },
                 ),
               ),
@@ -183,6 +205,7 @@ class _InitialPageState extends State<InitialPage> {
                         );
                         setState(() {});
                         query.clear();
+                        context.read<ChatBloc>().add(GetAllResponse());
                       }
                     },
                     icon: Icon(Icons.arrow_upward),

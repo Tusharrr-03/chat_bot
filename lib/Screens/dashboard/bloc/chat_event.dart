@@ -1,3 +1,5 @@
 abstract class ChatEvent{}
 
-class GetAllData extends ChatEvent{}
+class GetAllResponse extends ChatEvent{
+
+}

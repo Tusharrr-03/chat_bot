@@ -12,19 +12,36 @@ class ApiHelper{
 
   Future<dynamic> postApi({
     required String url,
+    required String msg,
     Map<String, dynamic>? params,
     Map<String, String>? mHeaders,
+    bool isAuth = false
   }) async{
+
+    /*if(isAuth){
+     /// use shared prefs to get the token
+      mHeaders["Authorization"] = "Gemini API $";
+    }*/
     try{
-      var res = await http.post(
+      /*var res = await http.post(
           Uri.parse(url),
         headers: mHeaders,
         body: params!=null ? jsonEncode(params) : null,
+      );*/
+      final res = await http.post(
+        Uri.parse(url),
+        headers: mHeaders,
+        body: jsonEncode({params,msg}),
       );
-    } on SocketException catch (e){
+
+      print("Status Code: ${res.statusCode}");
+      print("Response Body: ${res.body}");
+      print("Response: $res");
+      return returnResponse(res);
+    } on SocketException catch (e) {
       throw NoInternetException(errorMessage: e.toString());
-    } catch(e){
-      throw(e.toString());
+    } catch(e, stackTrace){
+      throw(e.toString(), stackTrace);
     }
   }
 

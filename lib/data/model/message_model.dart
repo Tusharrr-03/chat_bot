@@ -4,4 +4,12 @@ class MessageModel {
   String? sentAt;
 
   MessageModel({required this.id, required this.message, required this.sentAt});
+
+  factory MessageModel.fromText(String text, int id) {
+    return MessageModel(
+      id: id,
+      message: text,
+      sentAt: DateTime.now().millisecondsSinceEpoch.toString(),
+    );
+  }
 }
