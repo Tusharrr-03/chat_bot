@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:chat_bot/Screens/dashboard/bloc/chat_bloc.dart';
 import 'package:chat_bot/Screens/dashboard/bloc/chat_event.dart';
 import 'package:chat_bot/Screens/dashboard/bloc/chat_state.dart';
@@ -8,6 +10,7 @@ import 'package:chat_bot/utils/utils_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class InitialPage extends StatefulWidget {
   InitialPage({super.key});
@@ -19,27 +22,6 @@ class InitialPage extends StatefulWidget {
 class _InitialPageState extends State<InitialPage> {
   var query = TextEditingController();
   List<MessageModel> msgModel = [];
-
-  @override
-  void initState() {
-    super.initState();
-    msgModel.add(
-      MessageModel(
-        id: 0,
-        message: query.text,
-        sentAt: DateTime.now().millisecondsSinceEpoch.toString(),
-      ),
-    );
-    msgModel.add(
-      MessageModel(
-        id: 1,
-        message: "Response from Bot",
-        sentAt: DateTime.now().millisecondsSinceEpoch.toString(),
-      ),
-    );
-    //context.read<ChatBloc>().add(GetAllResponse());
-    ApiHelper().postApi(url: AppUrls.baseURl,msg: query.text);
-  }
 
   DateFormat hrsFormat = DateFormat.Hms();
 
@@ -58,14 +40,14 @@ class _InitialPageState extends State<InitialPage> {
                 children: [
                   RichText(
                     text: TextSpan(
-                      text: "Chat",
+                      text: "Gemini",
                       style: mTextStyle16(
                         mColor: Colors.white,
                         mFontWeight: FontWeight.normal,
                       ),
                       children: [
                         TextSpan(
-                          text: ' GPT',
+                          text: "AI",
                           style: mTextStyle16(
                             mColor: Colors.amber,
                             mFontWeight: FontWeight.bold,
@@ -146,6 +128,18 @@ class _InitialPageState extends State<InitialPage> {
                     }
 
                     if (state is SuccessChatState) {
+                      final text = state.response["candidates"]?[0]["content"]["parts"]?[0]["text"] ?? "No response";
+                      msgModel.insert(
+                        0,
+                        MessageModel(
+                          id: 1,
+                          message: text,
+                          sentAt: DateTime.now().millisecondsSinceEpoch.toString(),
+                        ),
+                      );
+                      print("bot response : ${state.response}");
+
+
                       return ListView.builder(
                         itemCount: msgModel.length,
                         reverse: true,
@@ -182,30 +176,21 @@ class _InitialPageState extends State<InitialPage> {
                   suffixIcon: IconButton(
                     onPressed: () {
                       if (query.text.trim().isNotEmpty) {
+                        String currentMsg = query.text;
+
                         msgModel.insert(
                           0,
                           MessageModel(
                             id: 0,
-                            message: query.text,
+                            message: currentMsg,
                             sentAt:
-                                DateTime.now().millisecondsSinceEpoch
-                                    .toString(),
+                            DateTime.now().millisecondsSinceEpoch
+                                .toString(),
                           ),
                         );
-
-                        msgModel.insert(
-                          1,
-                          MessageModel(
-                            id: 1,
-                            message: "Response from bot",
-                            sentAt:
-                                DateTime.now().millisecondsSinceEpoch
-                                    .toString(),
-                          ),
-                        );
+                        context.read<ChatBloc>().add(GetPromptUser(msg: query.text));
                         setState(() {});
                         query.clear();
-                        context.read<ChatBloc>().add(GetAllResponse());
                       }
                     },
                     icon: Icon(Icons.arrow_upward),

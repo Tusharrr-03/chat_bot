@@ -13,26 +13,36 @@ class ApiHelper{
   Future<dynamic> postApi({
     required String url,
     required String msg,
-    Map<String, dynamic>? params,
-    Map<String, String>? mHeaders,
-    bool isAuth = false
   }) async{
-
-    /*if(isAuth){
-     /// use shared prefs to get the token
-      mHeaders["Authorization"] = "Gemini API $";
-    }*/
     try{
-      /*var res = await http.post(
-          Uri.parse(url),
-        headers: mHeaders,
-        body: params!=null ? jsonEncode(params) : null,
-      );*/
       final res = await http.post(
         Uri.parse(url),
-        headers: mHeaders,
-        body: jsonEncode({params,msg}),
+        headers: {
+          "Content-Type" : "application/json",
+        },
+        body: jsonEncode({
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": msg,
+                }
+              ]
+            }
+          ]
+        })
       );
+
+      if(res.statusCode == true){
+        var data = jsonDecode(res.body);
+
+        if(data['Resources'] != null){
+          throw(HttpException(data['Resources']['text']));
+        }
+
+        return data;
+      }
 
       print("Status Code: ${res.statusCode}");
       print("Response Body: ${res.body}");

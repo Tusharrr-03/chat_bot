@@ -16,8 +16,10 @@ class ContentModel {
 
   factory ContentModel.fromJson(Map<String, dynamic> json) {
     List<PartsModel> mParts = [];
-    for (Map<String, dynamic> eachPart in json['parts']) {
-      mParts.add(PartsModel.fromJson(eachPart));
+    if (json['parts'] != null) {
+      for (Map<String, dynamic> eachPart in json['parts']) {
+        mParts.add(PartsModel.fromJson(eachPart));
+      }
     }
     return ContentModel(parts: mParts, role: json['role']);
   }
