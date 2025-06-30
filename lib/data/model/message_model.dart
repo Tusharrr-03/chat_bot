@@ -5,7 +5,13 @@ class MessageModel {
 
   MessageModel({required this.id, required this.message, required this.sentAt});
 
-  factory MessageModel.fromText(String text, int id) {
+  Map<String, dynamic> toJson() => {
+    "id" : id,
+    "message" : message,
+    "sentAt" : sentAt,
+  };
+
+  factory MessageModel.fromJson(String text, int id) {
     return MessageModel(
       id: id,
       message: text,

@@ -8,6 +8,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState>{
 
   ChatBloc({required this.chatRepo}) : super(InitialChatState()){
 
+    on<SendMsgEvent>(_onSendMsgEvent);
+    on<LoadMsgEvent>(_onLoadMsgEvent);
+
     on<GetPromptUser>((event, emit) async {
       emit(LoadingChatState());
       try {
@@ -16,6 +19,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState>{
       } catch (e) {
         emit(FailureChatState(errMsg: e.toString()));
       }
+    });
+
+    on<ClearChatEvent>((event, emit){
+
+    });
+  }
+
+  /// Firebase Implementation
+  Future<void> _onSendMsgEvent(SendMsgEvent event, Emitter<ChatState> emit) async{
+    try{
+      await chatRepo.addMessage(event.msg);
+    } catch(e){
+      emit(FailureChatState(errMsg: e.toString()));
+    }
+  }
+
+  Future<void> _onLoadMsgEvent(LoadMsgEvent event, Emitter<ChatState> emit) async{
+    emit(LoadingChatState());
+    chatRepo.getMessageStream().listen((message) {
+      emit(SuccessChatState(response: message));
     });
   }
 }

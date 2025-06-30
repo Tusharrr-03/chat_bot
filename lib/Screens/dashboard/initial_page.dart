@@ -7,6 +7,7 @@ import 'package:chat_bot/data/model/message_model.dart';
 import 'package:chat_bot/data/remote/app_urls.dart';
 import 'package:chat_bot/data/remote/helper/api_helper.dart';
 import 'package:chat_bot/utils/utils_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -24,6 +25,12 @@ class _InitialPageState extends State<InitialPage> {
   List<MessageModel> msgModel = [];
 
   DateFormat hrsFormat = DateFormat.Hms();
+
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +83,8 @@ class _InitialPageState extends State<InitialPage> {
                   InkWell(
                     onTap: () {
                       /// Clear the old chats
+                      msgModel.clear();
+                      setState(() {});
                     },
                     child: Container(
                       child: Row(
@@ -96,23 +105,33 @@ class _InitialPageState extends State<InitialPage> {
                       ),
                     ),
                   ),
-                  Container(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.watch_later_outlined,
-                          color: Colors.white,
-                          size: 19,
-                        ),
-                        Text(
-                          "History",
-                          style: mTextStyle16(
-                            mFontWeight: FontWeight.normal,
-                            mColor: Colors.white,
+                  Builder(
+                    builder: (context) {
+                      return InkWell(
+                        onTap: (){
+                          /// Slider bar for history
+                          Scaffold.of(context).openEndDrawer();
+                        },
+                        child: Container(
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.watch_later_outlined,
+                                color: Colors.white,
+                                size: 19,
+                              ),
+                              Text(
+                                "History",
+                                style: mTextStyle16(
+                                  mFontWeight: FontWeight.normal,
+                                  mColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    }
                   ),
                 ],
               ),
@@ -144,9 +163,10 @@ class _InitialPageState extends State<InitialPage> {
                         itemCount: msgModel.length,
                         reverse: true,
                         itemBuilder: (_, index) {
-                          return msgModel[index].id == 0
-                              ? userChat(msgModel[index])
-                              : botChat(msgModel[index]);
+                          final messageModel = msgModel[index];
+                          return messageModel.id == 0
+                              ? userChat(messageModel)
+                              : botChat(messageModel);
                         },
                       );
                     }
@@ -207,6 +227,24 @@ class _InitialPageState extends State<InitialPage> {
           ),
         ),
       ),
+      endDrawer: Drawer(
+        width: 250,
+          backgroundColor: AppColors.secondaryColor,
+          child: ListView(
+            children: [
+              ListTile(
+                title: Text("History", style: TextStyle(color: Colors.white),),
+                leading: Icon(Icons.history),
+                onTap: (){},
+              ),
+              ListTile(
+                title: Text("Settings", style: TextStyle(color: Colors.white),),
+                leading: Icon(Icons.settings),
+                onTap: (){},
+              )
+            ],
+          )
+      )
     );
   }
 
@@ -215,27 +253,40 @@ class _InitialPageState extends State<InitialPage> {
       DateTime.fromMillisecondsSinceEpoch(int.parse(msgModel.sentAt!)),
     );
 
-    return Container(
-      padding: EdgeInsets.all(11),
-      margin: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(21),
-          topRight: Radius.circular(21),
-          bottomLeft: Radius.circular(21),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(msgModel.message!, style: mTextStyle16(mColor: Colors.white)),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Text(time, style: mTextStyle12(mColor: Colors.white)),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          child: CircleAvatar(
+            backgroundImage: AssetImage("assets/images/chat_reply.png"),
           ),
-        ],
-      ),
+        ),
+        Container(
+          padding: EdgeInsets.all(11),
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(21),
+              topRight: Radius.circular(21),
+              bottomLeft: Radius.circular(21),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(msgModel.message!, style: mTextStyle16(mColor: Colors.white)),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Text(time, style: mTextStyle12(mColor: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+        Flexible(child: Container()),
+      ],
     );
   }
 
@@ -244,27 +295,41 @@ class _InitialPageState extends State<InitialPage> {
       DateTime.fromMillisecondsSinceEpoch(int.parse(msgModel.sentAt!)),
     );
 
-    return Container(
-      padding: EdgeInsets.all(11),
-      margin: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.yellow,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(21),
-          topRight: Radius.circular(21),
-          bottomRight: Radius.circular(21),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(msgModel.message!, style: mTextStyle16(mColor: Colors.black)),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Text(time, style: mTextStyle12(mColor: Colors.black)),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          width: 300,
+          padding: EdgeInsets.all(11),
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.yellow,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(21),
+              topRight: Radius.circular(21),
+              bottomRight: Radius.circular(21),
+            ),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(msgModel.message!, style: mTextStyle16(mColor: Colors.black)),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Text(time, style: mTextStyle12(mColor: Colors.black)),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: 40,
+          height: 40,
+          child: CircleAvatar(
+            backgroundImage: AssetImage("assets/images/ic_typing.png"),
+          ),
+        ),
+      ],
     );
   }
+
 }
